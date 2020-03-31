@@ -10,7 +10,7 @@ PROCESSED_DIRECTORY = "/tmp/Cortex/processed"
 correct_data = {
     "user_id": 50,
     "datetime": 12345,
-    "color_image_path": "color",
+    "color_image_path": os.path.join(os.path.dirname(__file__), 'color'),
     "depth_image_path": "depth",
     "pose_rotation_x": 0.1,
     "pose_rotation_y": 0.2,
