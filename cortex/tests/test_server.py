@@ -29,14 +29,14 @@ def test_cli_error_2():
     assert b'Error' in stdout
 
 
-def test_cli_error_5():
-
-    process = subprocess.Popen(
-        ['python', "-m", "cortex.server", "run-server"],
-        stdout=subprocess.PIPE,
-    )
-    stdout, _ = process.communicate()
-    assert b'Error' in stdout
+# def test_cli_error_3():
+#
+#     process = subprocess.Popen(
+#         ['python', "-m", "cortex.server", "run-server"],
+#         stdout=subprocess.PIPE,
+#     )
+#     stdout, _ = process.communicate()
+#     assert b'Error' in stdout
 
 
 def test_user_json():
