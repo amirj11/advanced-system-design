@@ -207,7 +207,7 @@ def test_cli_error_3():
 
 def test_cli_error_4():
     """
-    missing required arguments.
+    missing required arguments .
     """
     process = subprocess.Popen(
         ['python', "-m", "cortex.parsers", "parse", "pose"],
