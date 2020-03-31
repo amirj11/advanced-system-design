@@ -198,7 +198,7 @@ def test_cli_error_3():
     wrong action.
     """
     process = subprocess.Popen(
-        ['python', "-m", "cortex.parsers", "action", "pose", "nonexistent_data"],
+        ['python', "-m", "cortex.parsers", "action", "pose", "nonexistent_data_"],
         stdout=subprocess.PIPE,
     )
     stdout, _ = process.communicate()
