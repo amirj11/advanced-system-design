@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+	<head>
+		<title> Cortex: {{username}} </title>
+		<link rel="stylesheet" href='/static/styles.css'>
+		<base href="/users/{{user_id}}/" />
+	</head>
+	<body>
+		<h1> Cortex User {{username}} </h1>
+		<h3> You're viewing user {{username}}.</h3>
+	<a href="snapshots"> View Snapshots</a> (Raw Data)
+	<h4 align="center"> Feelings Graphs - click on points in the graph to see what the user was seeing at every point.
+	<br>
+	This way, you can know what caused each change in the graph results.</h4>
+	{% for graph in graphs_names %}
+		<div id="{{graph}}" align="center"></div>
+	{% endfor %}
+		<br><br>
+	<img src="user_pose.png" alt="user_pose">
+<!--	<div id="graph" align="center"></div>-->
+	<br>
+		<br>
+	<a href="/"> Return to Homepage </a>
+	</body>
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script type="text/javascript">
+
+        var graphs = {{graphJSON | safe}};
+
+        var graphs_names = {{graphs_names | safe}};
+
+<!--        Plotly.plot('graph',[graphs[0].data], graphs[0].layout);-->
+<!--        //Plotly.plot('graph',graphs[0].data, graphs[0].layout);-->
+
+		for(var i in graphs) {
+			Plotly.plot(graphs_names[i], [graphs[i].data], graphs[i].layout);
+			var data = graphs[i].data;
+			var myPlot = document.getElementById(graphs_names[i]);
+			myPlot.on('plotly_click', function(data){
+			var pts = '';
+			var pt_x = '';
+			for(var i=0; i < data.points.length; i++){
+				pts = 'x = '+data.points[i].x +'\ny = '+
+					data.points[i].y.toPrecision(4) + '\n\n';
+				pt_x = data.points[i].x;
+			}
+			image_dict = {{images | safe}};
+			window.open(image_dict[pt_x], '_blank');
+		});
+
+
+		}
+<!--        var myPlot = document.getElementById('graph');-->
+<!--		var data = graphs[0].data;-->
+
+<!--		myPlot.on('plotly_click', function(data){-->
+<!--			var pts = '';-->
+<!--			var pt_x = '';-->
+<!--			for(var i=0; i < data.points.length; i++){-->
+<!--				pts = 'x = '+data.points[i].x +'\ny = '+-->
+<!--					data.points[i].y.toPrecision(4) + '\n\n';-->
+<!--				pt_x = data.points[i].x;-->
+<!--			}-->
+<!--			image_dict = {{images | safe}};-->
+<!--			window.open(image_dict[pt_x], '_blank');-->
+<!--		});-->
+
+    </script>
+</html>

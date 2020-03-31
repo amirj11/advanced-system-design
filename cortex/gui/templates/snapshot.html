@@ -1,0 +1,35 @@
+<html>
+	<head>
+		<title> Cortex: {{username}}: {{snapshot_id}} </title>
+		<link rel="stylesheet" href='/static/styles.css'>
+		<base href="/users/{{user_id}}/snapshots/{{snapshot_id}}/" />
+	</head>
+	<body>
+		<h1> Cortex User {{username}}: Snapshot #{{snapshot_id}} </h1>
+		<h3> You're viewing raw data of snapshot {{snapshot_id}} for user {{username}}.</h3>
+	<br>
+	<a href="/users/{{user_id}}/snapshots"> Return to {{username}}s' snapshots</a>
+		<br><br>
+	<a href="/users/{{user_id}}"> Return to {{username}}s' page</a>
+		<br><br>
+	<a href="/"> Return to Homepage </a>
+		<div align="center">
+			{% for key, value in parsers.items() %}
+		<table>
+			<tr>
+				<th colspan="2">{{key}}</th>
+			</tr>
+			{% for name, result in value.items() %}
+			<tr>
+				<td>{{name}}</td>
+				<td>{{result}}</td>
+			</tr>
+			{% endfor %}
+
+		</table>
+			<br><br><br>
+			{% endfor %}
+		</div>
+
+	<br><br><br></body>
+</html>

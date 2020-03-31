@@ -1,0 +1,19 @@
+<html>
+	<head>
+		<title> Cortex Homepage </title>
+		<link rel="stylesheet" href='/static/styles.css'>
+	</head>
+	<body>
+		<h1 align="center"> Cortex Project Homepage </h1>
+		<h3> Welcome to Cortex. Navitage to a specific user to see its data.</h3>
+		{% for user in users %}
+		<div>
+			<p>
+				<a href="users/{{user['user_id']}}"> {{user["username"]}} ({{user["user_id"]}})</a> <br>
+
+			 </p>
+		 </div>
+		{% endfor %}
+
+	</body>
+</html>
