@@ -1,6 +1,6 @@
 # ignore sample mind file
 cortex/client/sample.mind.gz
-
+documentation/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
