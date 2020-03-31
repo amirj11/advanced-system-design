@@ -11,7 +11,7 @@ correct_data = {
     "user_id": 50,
     "datetime": 12345,
     "color_image_path": os.path.join(os.path.dirname(__file__), 'color'),
-    "depth_image_path": "depth",
+    "depth_image_path": os.path.join(os.path.dirname(__file__), 'depth'),
     "pose_rotation_x": 0.1,
     "pose_rotation_y": 0.2,
     "pose_rotation_z": 0.3,
