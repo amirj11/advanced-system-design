@@ -1,6 +1,8 @@
 # Cortex
 Cortex is a system which lets a client upload a file of "snapshots" of himself to a server. the snapshots are then passed to a message-queue, parsed, saved in a DB and can be queried via API, CLI or GUI.
 
+[![Build Status](https://travis-ci.org/amirj11/advanced-system-design.svg?branch=master)](https://travis-ci.org/github/amirj11/advanced-system-design)
+
 ## Overview
 The system contains the following components: (orange = server side, green = client side)
 
@@ -17,7 +19,7 @@ source .env/bin/activate
 
 
 # System Components
-
+ The system components are subpackages of the main project package.
 ### Snapshots File
 the snapshots file is a gzipped binary containing a sequence of messages, serialized with ProtoBuf (format in cortex/client/cortex.proto). it starts with a User message, defining the user who uploads the file (his name, user id, gender and birthday). after the User message there is a sequence of Snapshot messages, each containing:
 - snapshot timestamp (with milliseconds)
@@ -26,7 +28,7 @@ the snapshots file is a gzipped binary containing a sequence of messages, serial
 - depth image (binary sequence: a heatmap showing how far objects are from the user in this snapshot)
 - feelings (floats from -1 to 1: the users' thirst, exhaustion, hunger and happiness levels)
 
-### Client
+### 1. Client
 
 the client is initiated with a server ip, server port and a path to a "snapshots" file. it reads the snapshot file one message at a time (not reading all of it into memory at once), deserializes the message, re-serializes it to the same ProtoBuf protocol and sends it to the servers' REST APi using an HTTP POST request.
 the de-serialization and re-serlialization of the message may seem unnecessary because it's from and to the same format, but it decouples the client-server protocol from the files' format. this way, if the serialization format of the file changes, only the de-serialization in the client will change, but it will always re-serialize the data to the original ProtoBuf format. There will be no need for changes in the client-server protocol.
@@ -42,7 +44,7 @@ python -m cortex.client upload-sample -h/--host '127.0.0.1' \
     -p/--port 8000 'sample.mind.gz'
 ```
 
-### Server
+### 2. Server
 the server is a based on Flask and Flask-Restful. 
 it is initiated with a host, a port, and a publish method (function, in API) or a message-queue URL (in CLI). messages results from the server can either be sent to a function provided by the user, or to a message queue.
 API routes for use by the Client:
@@ -72,15 +74,15 @@ python -m cortex.server run-server -h/--host '127.0.0.1' \
     -p/--port 8000 'rabbitmq://127.0.0.1:5672/'
 ```
 
-### RabbitMQ (Message Queue)
+### 3. RabbitMQ (Message Queue)
 The message queue is just a Docker running RabbitMQ.
 
-### Parsers
+### 4. Parsers
 Parsers can run as a one-time script (receiving a parser name and data to parse), or as a service (connecting to MQ and consuming from it indefinitely).
 Parsers are functions. When initiated, the 'parsers' module connects to the MQ, passes messages to the correct parser function, and publishes the result which the parser returns. each parser initialization loads another instance of the 'parsers' module.
 The module connects to the 'snapshpt' exchange name ('direct' exchange type), and uses the parser function as a callback method for when a message arrives.
 The result from the parser is then sent to the 'processed_data' exchange name ('topic' exchange type), with the parsers' name as the topic. This data is received by the Saver.
-The parsers receive raw data in JSON the publish back JSON.
+The parsers receive raw data in JSON the publish back JSON messages.
 Each parser receives the entire snapshot data and extracts relevant data from it.
 
 #### Adding a new parser type
@@ -135,4 +137,88 @@ running as a service:
 ```bash
 python -m cortex.parsers run-parser 'pose' 'rabbitmq://127.0.0.1:5672/'
 ```
+
+### 5. Saver
+the saver receives process data from the MQ and saves it to a DB. This project uses MongoDB as the back-end, using 'pymongo' package, and can run once or as a service.
+It is initiated with a URL for the DB, and a URL for the MQ (if run as a service).
+As a service, the saver connects to the RabbitMQs' 'processed_data' exchange ('topic' exchange type), and binds to the following topics:
+- user_message (user messages from the Server)
+- pose
+- color_image
+- depth_image
+- feelings
+
+Whenever a message arrives on the queue, the callback function creates a "Saver" class instance and calls its 'save' method with the data received and the topic through which the message has arrived.
+Before saving data to the DB, the Saver verifies the data is not duplicated (i.e there isn't already such user, or that a certain parser result isn't already documented for a specific user with a specific snapshot timestamp). if not, it saves the data to the DB.
+
+The Saver exposes a Python API:
+```python
+from cortex.saver import Saver
+saver = Saver(database_url)
+data = ...  #  JSON String
+saver.save('color_image', data)
+```
+
+ and a CLI:
+ run once:
+ ```bash
+ python -m cortex.saver save -d/--database 'mongodb://127.0.0.1:27017/' \
+    'color_image' 'color.data'
+```
+run as a service:
+```bash
+python -m cortex.saver run-saver 'mongodb://127.0.0.1:27017/' \
+    'rabbitmq://127.0.0.1:5672/'
+```
+
+### 6. Database
+The database is a Docker of MongoDB.
+it contains the following collections:
+1. "user_message": users information, including user id, username, birthday and gender
+2. "snapshots": list of snapshots with only timestamp and user id
+3. collection for each parser: pose, color image, depth image, feelings. these collection contain the user id and snapshot timestamp as well as the processed results from each parser.
+
+
+### 7. API
+The API exposes a RESTful API to query the database
+It is a Flask server with Flask-Restful, using 'pymongo' to query the DB.
+
+Supported endpoints:
+- GET /users - a list of all documented users with their user ids and names.
+- GET /users/user-id - returns the user-id details: name, birthday and gender.
+- GET /users/user-id/snapshots - returns a list of documented snapshots with their timestamps only.
+- GET /users/user-id/snapshots/snapshot-id - returns the snapshot details - timestamp, supported results (documented parsers results for this snapshot).
+- GET /users/user-id/snapshots/snapshot-id/result-name - returns the specified parsers' results for this snapshot. for binary data (color and depth image) it returns the path to getting the actual binary data.
+- GET /users/user-id/snapshots/snapshot-id/color-image/data - returns the binary data of the image (supported for 'color-image' and 'depth-image')
+
+the API exposes a Python API:
+```python
+from cortex.api import run_api_server
+run_api_server(host="127.0.0.1", port=5000, database_url="mongodb://127.0.0.1:27017/")
+```
+
+and a CLI:
+```bash
+python -m cortex.api run-server -h/--host "127.0.0.1" -p/--port 8000 -d/--database 'mongodb://127.0.0.1:27017/'
+```
+
+### 8. CLI
+the CLI is a tool which consumes the API. it provides the user a way to send requests to the API.
+all CLI commands accept the -h/--host and -p/--port flags to configure the API address, but contain default values.
+The get-result command accepts the -s/--save flag that receives a path and saves the result to it.
+
+Available commands:
+```bash
+python -m cortex.cli get-users
+python -m cortex.cli get-user <user_id>
+python -m cortex.cli get-snapshots <user_id>
+python -m cortex.cli get-snapshot <user_id> <snapshot_id>
+python -m cortex.cli get-result <user_id> <snapshot_id> <parser_name>
+```
+
+### 9. GUI
+
+
+
+
 
