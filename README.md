@@ -17,10 +17,15 @@ run the following commands to deploy the project:
 source .env/bin/activate
 ```
 
+### Logging
+All system components use 'logging' package to log their execution and especially runtime errors. logs will be saved in "Logs" directory which will be created for each of the components inside its execution directory.
+
+### Testing
+The project has a tests directory under cortex/tests. The project is intergated with Travis-CI so that every push runs all project tests. Click the projects' Travis-CI badge at the beginning of this file for more details.
 
 # System Components
  The system components are subpackages of the main project package.
-### Snapshots File
+### 0. Snapshots File
 the snapshots file is a gzipped binary containing a sequence of messages, serialized with ProtoBuf (format in cortex/client/cortex.proto). it starts with a User message, defining the user who uploads the file (his name, user id, gender and birthday). after the User message there is a sequence of Snapshot messages, each containing:
 - snapshot timestamp (with milliseconds)
 - pose (floats; the user location in 3D and head tilt)
@@ -218,7 +223,7 @@ python -m cortex.cli get-result <user_id> <snapshot_id> <parser_name>
 
 ### 9. GUI
 
+## Protocol Summary
+This layout shows which protocol is used between all components:
 
-
-
-
+![overview image](https://raw.githubusercontent.com/amirj11/advanced-system-design/master/docs/protocols.jpg)
