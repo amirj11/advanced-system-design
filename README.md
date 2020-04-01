@@ -3,6 +3,32 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
 
 [![Build Status](https://travis-ci.org/amirj11/advanced-system-design.svg?branch=master)](https://travis-ci.org/github/amirj11/advanced-system-design)
 
+## Table of Contents
+
+  * [Overview](#overview)
+  * [Installation & Deployment](#installation---deployment)
+    + [Logging](#logging)
+    + [Testing](#testing)
+- [System Components](#system-components)
+    + [0. Snapshots File](#0-snapshots-file)
+    + [1. Client](#1-client)
+    + [2. Server](#2-server)
+        * [Server pusblishing to Message-Queue](#server-pusblishing-to-message-queue)
+    + [3. RabbitMQ (Message Queue)](#3-rabbitmq--message-queue-)
+    + [4. Parsers](#4-parsers)
+      - [Adding a new parser type](#adding-a-new-parser-type)
+        * [Pose Parser ('pose')](#pose-parser---pose--)
+        * [Color Image Parser ('color_image'), Depth Image Parser ('depth_image')](#color-image-parser---color-image----depth-image-parser---depth-image--)
+        * [Feelings Parser ('feelings')](#feelings-parser---feelings--)
+    + [5. Saver](#5-saver)
+    + [6. Database](#6-database)
+    + [7. API](#7-api)
+    + [8. CLI](#8-cli)
+    + [9. GUI](#9-gui)
+  * [Protocol Summary](#protocol-summary)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 ## Overview
 The system contains the following components: (orange = server side, green = client side)
 
@@ -226,4 +252,4 @@ python -m cortex.cli get-result <user_id> <snapshot_id> <parser_name>
 ## Protocol Summary
 This layout shows which protocol is used between all components:
 
-![overview image](https://raw.githubusercontent.com/amirj11/advanced-system-design/master/docs/protocols.jpg)
+![protocols image](https://raw.githubusercontent.com/amirj11/advanced-system-design/master/docs/protocols.jpg)
