@@ -5,10 +5,11 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
 
 ## Table of Contents
 
+- [Cortex](#cortex)
   * [Overview](#overview)
   * [Installation & Deployment](#installation---deployment)
-    + [Logging](#logging)
-    + [Testing](#testing)
+  * [Logging](#logging)
+  * [Testing](#testing)
 - [System Components](#system-components)
     + [0. Snapshots File](#0-snapshots-file)
     + [1. Client](#1-client)
@@ -16,7 +17,7 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
         * [Server pusblishing to Message-Queue](#server-pusblishing-to-message-queue)
     + [3. RabbitMQ (Message Queue)](#3-rabbitmq--message-queue-)
     + [4. Parsers](#4-parsers)
-      - [Adding a new parser type](#adding-a-new-parser-type)
+        * [Adding a new parser type](#adding-a-new-parser-type)
         * [Pose Parser ('pose')](#pose-parser---pose--)
         * [Color Image Parser ('color_image'), Depth Image Parser ('depth_image')](#color-image-parser---color-image----depth-image-parser---depth-image--)
         * [Feelings Parser ('feelings')](#feelings-parser---feelings--)
@@ -25,9 +26,10 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
     + [7. API](#7-api)
     + [8. CLI](#8-cli)
     + [9. GUI](#9-gui)
-  * [Protocol Summary](#protocol-summary)
+- [Protocol Summary](#protocol-summary)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 ## Overview
 The system contains the following components: (orange = server side, green = client side)
