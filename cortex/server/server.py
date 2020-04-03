@@ -18,7 +18,8 @@ PUBLISH = None  # will contain the function / message queue address
 EXCHANGE_NAME = "snapshot"  # will publish snapshots to this exchange
 USER_MESSAGE_EXCHANGE = "processed_data"  # will publish user meesages to this exchange
 USER_MESSAGE_TOPIC = "user_message"  # will publish user messages to this topic
-RAW_DIR = "/tmp/Cortex/raw"  # raw data for color_image and depth_image will be saved in this directory
+#RAW_DIR = "/tmp/Cortex/raw"  # raw data for color_image and depth_image will be saved in this directory
+RAW_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files", "raw")
 PUBLISH_METHODS = ["function", "message_queue"]  # available publishing methods the data
 
 
@@ -26,6 +27,7 @@ def init_logger():
 	"""
 	This function initializes the servers' logger. Logs will be save in Cortex/server/Logs directory.
 	"""
+	print(RAW_DIR)
 	now = datetime.now()
 	time_string = now.strftime("%d.%m.%Y-%H:%M:%S")
 	dir_path = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), "Logs"))

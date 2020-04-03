@@ -13,7 +13,8 @@ PARSERS = {}
 CHANNEL_NAME = "snapshot_message"
 EXCHANGE_NAME = "snapshot"
 EXCHANGE_PUBLISH = "processed_data"
-PROCESSED_DIRECTORY = "/tmp/Cortex/processed"
+PROCESSED_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files", "processed")
+#PROCESSED_DIRECTORY = "/tmp/Cortex/processed"
 
 
 def init_logger(parser_name):
@@ -61,6 +62,7 @@ def run_parser_service(parser_name, message_queue):
     it is passed to run_parser with the data.
     """
     try:
+        print(message_queue)
         connection = pika.BlockingConnection(pika.ConnectionParameters(message_queue))
         channel = connection.channel()
         channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='direct')
