@@ -18,7 +18,7 @@ The system can be automatically deployed with multiple Dockers.
         * [Server pusblishing to Message-Queue](#server-pusblishing-to-message-queue)
     + [3. RabbitMQ (Message Queue)](#3-rabbitmq--message-queue-)
     + [4. Parsers](#4-parsers)
-      - [Adding a new parser type](#adding-a-new-parser-type)
+        * [Adding a new parser type](#adding-a-new-parser-type)
         * [Pose Parser ('pose')](#pose-parser---pose--)
         * [Color Image Parser ('color_image'), Depth Image Parser ('depth_image')](#color-image-parser---color-image----depth-image-parser---depth-image--)
         * [Feelings Parser ('feelings')](#feelings-parser---feelings--)
@@ -32,6 +32,7 @@ The system can be automatically deployed with multiple Dockers.
 - [Automatic Deployment (using Dockers)](#automatic-deployment--using-dockers-)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 
 
@@ -126,7 +127,7 @@ The result from the parser is then sent to the 'processed_data' exchange name ('
 - Each parser receives the entire snapshot data and extracts relevant data from it.
 - Several parsers of the same type can be initiated to perform load-balancing.
 
-#### Adding a new parser type
+##### Adding a new parser type
 Adding new types of parsers is very easy. Follow these steps:
 1. open cortex/parsers/parsers.py
 2. write your parsing function which accepts a single argument (for data). The data will be passed to you parser in JSON string format, with values as documented in the "snapshot_to_json" function of cortex/server/server.py
