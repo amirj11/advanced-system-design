@@ -67,8 +67,7 @@ class GetUsers(Resource):
                 data.append(user)
             return data
         except Exception as e:
-            logging.error("Could not connect to DB: {}".format(e))
-            exit_run()
+            exit_run("Could not connect to DB: {}".format(e))
 
 
 class GetUser(Resource):
@@ -113,8 +112,7 @@ class GetUserSnapshots(Resource):
                 data.append(snapshot["datetime"])
             return data
         except Exception as e:
-            logging.error("Could not connect to DB: {}".format(e))
-            exit_run()
+            exit_run("Could not connect to DB: {}".format(e))
 
 
 class GetSnapshotById(Resource):
@@ -143,7 +141,7 @@ class GetSnapshotById(Resource):
                     data.append(parser.replace('_', '-'))
             return data
         except Exception as e:
-            logging.error("Could not connect to DB: {}".format(e))
+            exit_run("Could not connect to DB: {}".format(e))
 
 
 class GetSnapshotResults(Resource):
@@ -284,6 +282,8 @@ def parser_result(parser_name, user_id, snapshot_id):
         abort(404)
 
 
-def exit_run():
-    print("Error encountered. Please see log for details.")
+def exit_run(message):
+    logging.error(message)
+    print("Error encountered:")
+    print(message)
     sys.exit(1)

@@ -7,22 +7,25 @@
 	<body>
 		<h1> Cortex User {{username}}: Snapshots </h1>
 		<h3> You're viewing snapshots for user {{username}}.</h3>
-		<h4> Click on a snapshot to view its raw data.</h4>
+		<h4> Click on a snapshot to view its summary and data.</h4>
 	<br>
 	<a href="/users/{{user_id}}"> Return to {{username}}s' page</a>
-		<br><br>
-	<a href="/"> Return to Homepage </a>
+		<br>
+	<a href="/"> Return to Homepage </a> <br><br>
 		<div align="center">
+		{% if empty_page == 0 %}
 		<table>
 			<tr>
 				<th>Snapshot ID (Timestamp)</th>
 				<th>Snapshot Time</th>
+				<th> Snapshot Image </th>
 				<th>Available Results</th>
 			</tr>
 			{% for key, value in snapshots.items() %}
 			<tr>
 				<td> <a href="{{key}}"> {{key}} </a></td>
 				<td> {{times[key]}}</td>
+				<td> <a href="{{images[key]}}" target="_blank"><img height=120 width=160 src="{{images[key]}}"></a></td>
 				<td>{% for parser in value %}
 				{% if loop.index > 1 %} | {% endif %}
 					{{parser}}
@@ -31,6 +34,16 @@
 			</tr>
 			{% endfor %}
 		</table>
+		{% else %}
+			<h3> ERROR: No snapshots to show. Page number exceeded number of snapshots. </h3>
+		{% endif %}
+
+			{% if page_num > 1 %}
+			<a href="/users/{{user_id}}/snapshots?page={{page_num-1}}"> Previous Page </a>
+			{% endif %}
+			{% if snapshots|length == 10 %}
+			<a href="/users/{{user_id}}/snapshots?page={{page_num+1}}"> Next Page </a>
+			{% endif %}
 		</div>
 
 	<br><br><br></body>

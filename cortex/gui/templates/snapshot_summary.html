@@ -1,0 +1,51 @@
+<html>
+	<head>
+		<title> Cortex: {{username}}: {{snapshot_id}} </title>
+		<link rel="stylesheet" href='/static/styles.css'>
+		<base href="/users/{{user_id}}/snapshots/{{snapshot_id}}/" />
+
+	</head>
+	<body align="center">
+	<h1> Cortex User {{username}} </h1>
+		<h3> Snapshot #{{snapshot_id}} Summary </h3>
+		<a href="/users/{{user_id}}/snapshots"> Return to {{username}}s' snapshots list </a> <br>
+		<a href="/users/{{user_id}}"> Return to {{username}}s' main page </a> <br> <br>
+	<table align="center">
+		<tr>
+		<th> Color Image </th>
+		<th> Depth Image </th>
+		</tr>
+		<tr>
+			<td> <a href="/users/{{user_id}}/snapshots/{{snapshot_id}}/color-image" target="_blank"><img height=400 width=400 src="/users/{{user_id}}/snapshots/{{snapshot_id}}/color-image"></a> </td>
+			<td> <a href="/users/{{user_id}}/snapshots/{{snapshot_id}}/depth-image" target="_blank"><img height=400 width=400 src="/users/{{user_id}}/snapshots/{{snapshot_id}}/depth-image"></a> </td>
+		</tr>
+		<tr>
+			<th> 3D Location </th>
+			<th> Head Tilt </th>
+		</tr>
+		<td> <a href="/users/{{user_id}}/snapshots/{{snapshot_id}}/translation" target="_blank"><img height=400 width=400 src="/users/{{user_id}}/snapshots/{{snapshot_id}}/translation"></a> </td>
+
+
+	</table>
+
+		<div align="center">
+			<h3> Snapshot Raw Data </h3>
+			{% for key, value in parsers.items() %}
+		<table>
+			<tr>
+				<th colspan="2">{{key}}</th>
+			</tr>
+			{% for name, result in value.items() %}
+			<tr>
+				<td>{{name}}</td>
+				<td>{{result}}</td>
+			</tr>
+			{% endfor %}
+
+		</table>
+			<br><br><br>
+			{% endfor %}
+		</div>
+
+	<br><br><br></body>
+</html>

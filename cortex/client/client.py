@@ -41,19 +41,16 @@ def upload_sample(host, port, path, protocol="ProtoBuf"):
     """
     init_logger()
     if host is None or port is None or path is None:
-        logging.error("Parameters can't be None: host={}, port={}, path={}".format(host, port, path))
-        sys.exit(1)
+        exit_run("Parameters can't be None: host={}, port={}, path={}".format(host, port, path))
     if protocol not in PROTOCOLS:
-        logging.error("Attempted use of unknown protocol: {}".format(protocol))
-        exit_run()
+        exit_run("Attempted use of unknown protocol: {}".format(protocol))
 
     if protocol == "ProtoBuf":
         sample_file = ""
         try:
             sample_file = gzip.open(path, 'rb')
-        except FileNotFoundError:
-            logging.error("Sample file not found: {}".format(path))
-            exit_run()
+        except FileNotFoundError as e:
+            exit_run("Sample file not found: {}".format(path))
 
         # deserialize user data from sample file, and reserialize it into a new ProtoBuf User() message
         user_message_size = struct.unpack('I', sample_file.read(4))[0]
@@ -72,8 +69,7 @@ def upload_sample(host, port, path, protocol="ProtoBuf"):
                                                                               new_user_message.user_id,
                                                                               send.status_code))
         except Exception as e:
-            logging.error("Could not send user message to server: {}".format(e))
-            exit_run()
+            exit_run("Could not send user message to server: {}".format(e))
 
         count = 1
         while len(snapshot_size_bin := sample_file.read(4)) > 0:
@@ -97,8 +93,7 @@ def upload_sample(host, port, path, protocol="ProtoBuf"):
                 print("Snapshot {} uploaded ({}, {})".format(count, new_user_message.username,
                                                              new_user_message.user_id))
             except Exception as e:
-                logging.error("Could not send snapshot message to server: {}".format(e))
-                exit_run()
+                exit_run("Could not send snapshot message to server: {}".format(e))
             count += 1
 
         logging.debug("Finished uploading snapshots for user {}. Number of snapshots: {}"
@@ -164,6 +159,8 @@ def reserialize_snapshot(raw_message, protocol="ProtoBuf"):
         return snapshot_message.SerializeToString()
 
 
-def exit_run():
-    print("Error encountered. Please see log for details")
+def exit_run(message):
+    logging.error(message)
+    print("Error encountered:")
+    print(message)
     sys.exit(1)

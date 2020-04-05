@@ -13,12 +13,14 @@ import pathlib
 app = Flask(__name__)
 api = Api(app)
 
+SUPPORTED_QUEUE = ["rabbitmq"]
 PUBLISH_METHOD = None  # will be set to "message_queue" or "function"
 PUBLISH = None  # will contain the function / message queue address
+MQ_PORT = None
+MQ_TYPE = None
 EXCHANGE_NAME = "snapshot"  # will publish snapshots to this exchange
 USER_MESSAGE_EXCHANGE = "processed_data"  # will publish user meesages to this exchange
 USER_MESSAGE_TOPIC = "user_message"  # will publish user messages to this topic
-#RAW_DIR = "/tmp/Cortex/raw"  # raw data for color_image and depth_image will be saved in this directory
 RAW_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files", "raw")
 PUBLISH_METHODS = ["function", "message_queue"]  # available publishing methods the data
 
@@ -27,7 +29,6 @@ def init_logger():
 	"""
 	This function initializes the servers' logger. Logs will be save in Cortex/server/Logs directory.
 	"""
-	print(RAW_DIR)
 	now = datetime.now()
 	time_string = now.strftime("%d.%m.%Y-%H:%M:%S")
 	dir_path = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), "Logs"))
@@ -84,8 +85,7 @@ class GetSnapshotMessage(Resource):
 				serialized = json.dumps(result)
 				f.write(serialized)
 		except EnvironmentError as e:
-			logging.error("Could not open {}: {}".format(depth_image_path, e))
-			exit_run()
+			exit_run("Could not open {}: {}".format(depth_image_path, e))
 
 		snapshot_json = snapshot_to_json(data, user_id)
 		if globals()["PUBLISH_METHOD"] == "message_queue":
@@ -132,26 +132,38 @@ def run_server(host, port, publish, publish_method="function"):
 	publish_method = string, "function" or "message_queue" - that is where the data will be redirected.
 	"""
 	if host is None or port is None or publish is None:
-		logging.error("None parameters not allowed: host={}, port={}, publish={}".format(host, port, publish))
-		exit_run()
+		print("None parameters not allowed: host={}, port={}, publish={}".format(host, port, publish))
+		sys.exit(1)
 
 	if publish_method not in PUBLISH_METHODS:
-		logging.error("Publish method {} is not allowed".format(publish_method))
-		exit_run()
+		print("Publish method {} is not allowed".format(publish_method))
+		sys.exit(1)
 
 	init_logger()
 	logging.debug("Initiating Server.")
 	global_variables = globals()
+
+	#  if using MQ - verify MQ type and extract host, port
+	if publish_method == "message_queue":
+		mq_type, address = publish.split('://')
+		mq_host, mq_port = address.split(':')
+		mq_port = int(str(mq_port).rstrip('/'))
+		if mq_type not in SUPPORTED_QUEUE:
+			exit_run("MQ Type not supported. please use: {}".format(SUPPORTED_QUEUE))
+		global_variables["PUBLISH"] = mq_host
+		global_variables["MQ_PORT"] = mq_port
+
+	elif publish_method == "function":
+		global_variables["PUBLISH"] = publish
+
 	global_variables["PUBLISH_METHOD"] = publish_method
-	global_variables["PUBLISH"] = publish
 	logging.debug("Publish Method: {}".format(publish_method))
 	logging.debug("Publish Destination: {}".format(publish))
 	try:
 		app.run(host=host, port=port)  # this is blocking!
 
 	except Exception as e:
-		logging.error("Coult not start server: {}".format(e))
-		exit_run()
+		exit_run("Error: Could not start server: {}".format(e))
 
 
 def publish_snapshot(message):
@@ -160,10 +172,11 @@ def publish_snapshot(message):
 	a message is a serialized JSON message.
 	the function uses direct routing to an exchange called EXCHANGE_NAME.
 	all snapshot parsers register to this exchange and receive a copy of the message.
+	The use of a publishing function allows for easy addition of different MQ types in the future.
 	"""
 	try:
 		global_variables = globals()
-		connection = pika.BlockingConnection(pika.ConnectionParameters(global_variables["PUBLISH"]))
+		connection = pika.BlockingConnection(pika.ConnectionParameters(global_variables["PUBLISH"], global_variables["MQ_PORT"]))
 		channel = connection.channel()
 		channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='direct')
 		channel.basic_publish(exchange=EXCHANGE_NAME, routing_key=EXCHANGE_NAME, body=message)
@@ -171,8 +184,7 @@ def publish_snapshot(message):
 
 	except (pika.exceptions.ConnectionClosed, pika.exceptions.AMQPChannelError, pika.exceptions.AMQPError,
 			pika.exceptions.NoFreeChannels, pika.exceptions.ConnectionWrongStateError) as e:
-		logging.error("Error publishing snapshot to MQ: {}".format(e))
-		exit_run()
+		exit_run("Error publishing snapshot to MQ: {}".format(e))
 
 
 def publish_user_message(message):
@@ -184,10 +196,11 @@ def publish_user_message(message):
 	with USER_MESSAGE_TOPIC as routing key, which the saver listens to.
 	exchange USER_MESSAGE_EXCHANGE is identical to the exchange used by parsers to publish finished data,
 	so the saver receives the user message just like a finished processed message from parsers.
+	The use of a publishing function allows for easy addition of different MQ types in the future.
 	"""
 	try:
 		global_variables = globals()
-		connection = pika.BlockingConnection(pika.ConnectionParameters(global_variables["PUBLISH"]))
+		connection = pika.BlockingConnection(pika.ConnectionParameters(global_variables["PUBLISH"], global_variables["MQ_PORT"]))
 		publish_channel = connection.channel()
 		publish_channel.exchange_declare(exchange=USER_MESSAGE_EXCHANGE, exchange_type='topic')
 		routing_key = USER_MESSAGE_TOPIC
@@ -196,8 +209,7 @@ def publish_user_message(message):
 	except (pika.exceptions.ConnectionClosed, pika.exceptions.AMQPChannelError, pika.exceptions.AMQPError,
 			pika.exceptions.NoFreeChannels, pika.exceptions.ConnectionWrongStateError,
 			pika.exceptions.ConnectionClosedByBroker) as e:
-		logging.error("Error publishing user message to MQ: {}".format(e))
-		exit_run()
+		exit_run("Error publishing user message to MQ: {}".format(e))
 
 
 def user_to_json(data):
@@ -250,6 +262,8 @@ def snapshot_to_json(data, user_id):
 	return json.dumps(result)
 
 
-def exit_run():
-	print("Error encountered. Please see log for details")
+def exit_run(message):
+	logging.error(message)
+	print("Error encountered:")
+	print(message)
 	sys.exit(1)

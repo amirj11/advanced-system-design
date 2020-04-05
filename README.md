@@ -1,5 +1,6 @@
 # Cortex
 Cortex is a system which lets a client upload a file of "snapshots" of himself to a server. the snapshots are then passed to a message-queue, parsed, saved in a DB and can be queried via API, CLI or GUI.
+The system can be automatically deployed with multiple Dockers.
 
 [![Build Status](https://travis-ci.org/amirj11/advanced-system-design.svg?branch=master)](https://travis-ci.org/github/amirj11/advanced-system-design)
 
@@ -8,8 +9,8 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
 - [Cortex](#cortex)
   * [Overview](#overview)
   * [Installation & Deployment](#installation---deployment)
-  * [Logging](#logging)
-  * [Testing](#testing)
+    + [Logging](#logging)
+    + [Testing](#testing)
 - [System Components](#system-components)
     + [0. Snapshots File](#0-snapshots-file)
     + [1. Client](#1-client)
@@ -17,7 +18,7 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
         * [Server pusblishing to Message-Queue](#server-pusblishing-to-message-queue)
     + [3. RabbitMQ (Message Queue)](#3-rabbitmq--message-queue-)
     + [4. Parsers](#4-parsers)
-        * [Adding a new parser type](#adding-a-new-parser-type)
+      - [Adding a new parser type](#adding-a-new-parser-type)
         * [Pose Parser ('pose')](#pose-parser---pose--)
         * [Color Image Parser ('color_image'), Depth Image Parser ('depth_image')](#color-image-parser---color-image----depth-image-parser---depth-image--)
         * [Feelings Parser ('feelings')](#feelings-parser---feelings--)
@@ -26,9 +27,12 @@ Cortex is a system which lets a client upload a file of "snapshots" of himself t
     + [7. API](#7-api)
     + [8. CLI](#8-cli)
     + [9. GUI](#9-gui)
-- [Protocol Summary](#protocol-summary)
+  * [Protocol Summary](#protocol-summary)
+  * [MQ Communication Summary](#mq-communication-summary)
+- [Automatic Deployment (using Dockers)](#automatic-deployment--using-dockers-)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 
 ## Overview
@@ -46,7 +50,7 @@ source .env/bin/activate
 ```
 
 ### Logging
-All system components use 'logging' package to log their execution and especially runtime errors. logs will be saved in "Logs" directory which will be created for each of the components inside its execution directory.
+All system components use 'logging' package to log their runtime errors and some of their regular runtime operations. logs will be saved in "Logs" directory which will be created inside each of the components' directories.
 
 ### Testing
 The project has a tests directory under cortex/tests. The project is intergated with Travis-CI so that every push runs all project tests. Click the projects' Travis-CI badge at the beginning of this file for more details.
@@ -61,6 +65,8 @@ the snapshots file is a gzipped binary containing a sequence of messages, serial
 - depth image (binary sequence: a heatmap showing how far objects are from the user in this snapshot)
 - feelings (floats from -1 to 1: the users' thirst, exhaustion, hunger and happiness levels)
 
+Before each message is its size in bytes, so the snapshot binary file format is:
+(user message size)(user message)(snapshot #1 message size)(snapshot 1)(snapshot #2 message size)(snapshot 2), etc.
 ### 1. Client
 
 the client is initiated with a server ip, server port and a path to a "snapshots" file. it reads the snapshot file one message at a time (not reading all of it into memory at once), deserializes the message, re-serializes it to the same ProtoBuf protocol and sends it to the servers' REST APi using an HTTP POST request.
@@ -104,19 +110,21 @@ run_server(host='127.0.0.1', port=8000, publish=print_message)
 and a CLI:
 ```bash
 python -m cortex.server run-server -h/--host '127.0.0.1' \
-    -p/--port 8000 'rabbitmq://127.0.0.1:5672/'
+    -p/--port 8000 'rabbitmq://127.0.0.1:5672'
 ```
 
 ### 3. RabbitMQ (Message Queue)
-The message queue is just a Docker running RabbitMQ.
+- The message queue is just a running RabbitMQ service (or Docker in the Automatic docker deployment).
+- The components which use the MQ (Server, Parsers, Saver) have their MQ-related  code concentrated in wrappers and publishing function, which makes adding support for other types of MQs very easy. They already know that they work with "RabbitMQ", and won't accept any other MQ URL.
 
 ### 4. Parsers
-Parsers can run as a one-time script (receiving a parser name and data to parse), or as a service (connecting to MQ and consuming from it indefinitely).
-Parsers are functions. When initiated, the 'parsers' module connects to the MQ, passes messages to the correct parser function, and publishes the result which the parser returns. each parser initialization loads another instance of the 'parsers' module.
-The module connects to the 'snapshpt' exchange name ('direct' exchange type), and uses the parser function as a callback method for when a message arrives.
+- Parsers can run as a one-time script (receiving a parser name and data to parse), or as a service (connecting to MQ and consuming from it indefinitely).
+- Parsers are functions. When initiated, the 'parsers' module connects to the MQ, passes messages to the correct parser function, and publishes the result which the parser returns. each parser initialization loads another instance of the 'parsers' module.
+- The module connects to the 'snapshpt' exchange name ('direct' exchange type), and uses the parser function as a callback method for when a message arrives.
 The result from the parser is then sent to the 'processed_data' exchange name ('topic' exchange type), with the parsers' name as the topic. This data is received by the Saver.
-The parsers receive raw data in JSON the publish back JSON messages.
-Each parser receives the entire snapshot data and extracts relevant data from it.
+- The parsers receive raw data in JSON the publish back JSON messages.
+- Each parser receives the entire snapshot data and extracts relevant data from it.
+- Several parsers of the same type can be initiated to perform load-balancing.
 
 #### Adding a new parser type
 Adding new types of parsers is very easy. Follow these steps:
@@ -128,11 +136,12 @@ Adding new types of parsers is very easy. Follow these steps:
 
 
 ##### Pose Parser ('pose')
-extracts pose data from snapshot (3D user location, head tilt) into a smaller JSON message. result values:
+extracts pose data from snapshot (3D user location, head tilt) into a smaller JSON message, saves the user 3d location and head tilt as pictures. result values:
 - user id
 - snapshot timestamp
 - Translation: x, y, z
 - Rotation: x, y, z, w
+- paths to rotation and translation images
 
 ##### Color Image Parser ('color_image'), Depth Image Parser ('depth_image')
 extract image data (color image or depth image) from snapshot (image height, width), oreads the raw binary data from disk and converts it to a real image using PIL, and saves the processed image to disk.
@@ -168,7 +177,7 @@ pythom -m cortex.parsers parse 'pose' 'snapshot.raw' > 'pose.result'
 
 running as a service:
 ```bash
-python -m cortex.parsers run-parser 'pose' 'rabbitmq://127.0.0.1:5672/'
+python -m cortex.parsers run-parser 'pose' 'rabbitmq://127.0.0.1:5672'
 ```
 
 ### 5. Saver
@@ -180,7 +189,7 @@ As a service, the saver connects to the RabbitMQs' 'processed_data' exchange ('t
 - color_image
 - depth_image
 - feelings
-
+Binding to individual topics allows to add another component in parallel to the Saver, which can declare which data it wants to receive, instead of receiving all data as default.
 Whenever a message arrives on the queue, the callback function creates a "Saver" class instance and calls its 'save' method with the data received and the topic through which the message has arrived.
 Before saving data to the DB, the Saver verifies the data is not duplicated (i.e there isn't already such user, or that a certain parser result isn't already documented for a specific user with a specific snapshot timestamp). if not, it saves the data to the DB.
 
@@ -201,11 +210,11 @@ saver.save('color_image', data)
 run as a service:
 ```bash
 python -m cortex.saver run-saver 'mongodb://127.0.0.1:27017/' \
-    'rabbitmq://127.0.0.1:5672/'
+    'rabbitmq://127.0.0.1:5672'
 ```
 
 ### 6. Database
-The database is a Docker of MongoDB.
+The database is a running MongoDB service (or Docker in the Auto docker deployment).
 it contains the following collections:
 1. "user_message": users information, including user id, username, birthday and gender
 2. "snapshots": list of snapshots with only timestamp and user id
@@ -250,8 +259,47 @@ python -m cortex.cli get-result <user_id> <snapshot_id> <parser_name>
 ```
 
 ### 9. GUI
+The GUI is based on Flask and Flask-Restful.
+I've put most of the focus on the feelings since they can summarize what the user was experiencing througout the sample.
+1. inside the main users' page you will see 4 interactive graphs, one for each feeling.
+2. **clicking on a certain point inside a graph will open the color image the user was seeing at that moment - making it extremely easy to understand why the users' feelings are changing.**
+3. You can also get a full list of user snapshots, and inside each snapshots' page you will find a snapshot summary (including the color image, depth image, user location etc) and the raw data of the snapshot as saved in the DB.
+
+The GUI exploses a Python API:
+```python
+from cortex.gui import run_server
+run_server(host='127.0.0.1', port=8080, database_url='mongodb://127.0.0.1/27017/')
+```
+
+and a CLI:
+```bash
+python -m cortex.gui run-server -h/--host '127.0.0.1' -p/--port 8080 -d/--database 'mongodb://127.0.0.1/27017/'
+```
 
 ## Protocol Summary
 This layout shows which protocol is used between all components:
 
 ![protocols image](https://raw.githubusercontent.com/amirj11/advanced-system-design/master/docs/protocols.jpg)
+
+## MQ Communication Summary
+This layout shows a summary of communication through the RabbitMQ:
+
+![mq image](https://raw.githubusercontent.com/amirj11/advanced-system-design/master/docs/mq.jpg)
+
+# Automatic Deployment (using Dockers)
+The system can be quickly deployed using Dockers by running the pre-configured deployment script: run-pipeline.sh
+This script will: 
+1. Build a Docker image based on Ubuntu with the project directory and all dependencies already inside.
+2. Deploy each system component (Server, MQ, Parsers, Saver, DB, API and GUI) in its own Docker.
+3. All Dockers will use a shared directory (volume) in which the raw binary data and final processed images will be saved.
+4. All Dockers will share a dedicated network.
+5. Multiple depth-image parsers will be deployed to demonstrate load-balancing between same types of parsers.
+
+Some Dockers will be accessible from your host machine:
+
+* Server: localhost:8000
+* API: localhost:5000
+* GUI: http://localhost:8080
+
+After deployment you can start uploading sample files from the client to the server, and watch the results in the GUI or get them with the CLI.
+The deployment script may take several minutes to finish preparing the system and build the project image.

@@ -5,18 +5,50 @@
 		<link rel="stylesheet" href='/static/styles.css'>
 		<base href="/users/{{user_id}}/" />
 	</head>
-	<body>
-		<h1> Cortex User {{username}} </h1>
-		<h3> You're viewing user {{username}}.</h3>
-	<a href="snapshots"> View Snapshots</a> (Raw Data)
-	<h4 align="center"> Feelings Graphs - click on points in the graph to see what the user was seeing at every point.
+	<body align="center">
+		<h1 align="center"> Cortex User {{username}} </h1>
+		<br>
+		<a href="snapshots" size="14"> View All Snapshots</a><br><br>
+	<table align="center">
+<!--		<th colspan="2"> User Details </th>-->
+<!--	{% for key, value in user_details.items() %}-->
+<!--		<tr>-->
+<!--			<td> {{key}} </td>-->
+<!--			<td> {{value}} </td>-->
+<!--		</tr>-->
+<!--	{% endfor %}-->
+		<tr>
+			<th colspan="3"> User Details</th>
+		</tr>
+		<tr>
+		{% for key in user_details.keys() %}
+			<td> {{key}}</td>
+		{% endfor %}
+		</tr>
+		<tr>
+		{% for value in user_details.values() %}
+			<td> {{value}}</td>
+		{% endfor %}
+		</tr>
+
+		 </table>
+		<br>
+	<h3 align="center"> Feelings Graphs</h3>
+	<h4 align="center"> click on points in the graph to see what the user was seeing at every point.
 	<br>
-	This way, you can know what caused each change in the graph results.</h4>
-	{% for graph in graphs_names %}
-		<div id="{{graph}}" align="center"></div>
+	This way, you can know what caused each change in his feelings.</h4>
+	<table align="center">
+	{% for i in range(0, graphs_names|length, 2) %}
+		<tr>
+			<td> <div id="{{graphs_names[i]}}" align="center"></div> </td>
+			<td> <div id="{{graphs_names[i+1]}}" align="center"></div> </td>
+		</tr>
 	{% endfor %}
+<!--	{% for graph in graphs_names %}-->
+<!--		<div id="{{graph}}" align="center"></div>-->
+<!--	{% endfor %}-->
+	</table>
 		<br><br>
-	<img src="user_pose.png" alt="user_pose">
 <!--	<div id="graph" align="center"></div>-->
 	<br>
 		<br>

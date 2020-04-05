@@ -10,6 +10,7 @@ EXCHANGE_NAME = "processed_data"  # the save will listen to this exchange
 # The saver will listen to these topics in the exchange:
 TOPICS_LISTEN = ["user_message", "pose", "color_image", "depth_image", "feelings"]
 DB_NAME = "Cortex"
+SUPPORTED_QUEUE = ["rabbitmq"]
 
 
 def init_logger():
@@ -39,8 +40,7 @@ class Saver:
             self.client = MongoClient(database_url)
             self.db = self.client[DB_NAME]
         except Exception as e:
-            logging.error("Error connecting to MongoDB: {}".format(e))
-            exit_run()
+            exit_run("Error connecting to MongoDB: {}".format(e))
 
     def save(self, topic, data):
         """
@@ -96,22 +96,28 @@ class Saver:
             # insert the new data (user/parser results) to the DB
             insert = collection.insert_one(message_content)
         except KeyError as e:
-            logging.error("KeyError: {}".format(e))
-            exit_run()
+            exit_run("KeyError: {}".format(e))
 
         except Exception as e:
-            logging.error("Error connecting to MongoDB: {}".format(e))
-            exit_run()
+            exit_run("Error connecting to MongoDB: {}".format(e))
 
 
-def run_saver_wrapper(database_url, message_queue_url):
+def run_saver_wrapper(database_url, mq_url):
     """
     Connects to the message queue, registers to the exchange, and registers to all topics in TOPICS_LISTEN
     Then, consumes messages from the exchange with the listed topics.
+    All MQ Code is in this function. This makes it easier to add additional MQ Types in the future.
     """
     try:
+        # Check MQ Type and extract host, port
+        mq_type, address = mq_url.split('://')
+        mq_host, mq_port = address.split(':')
+        mq_port = int(str(mq_port).rstrip('/'))
+        if mq_type not in SUPPORTED_QUEUE:
+            print("MQ Type not supported. please use: {}".format(SUPPORTED_QUEUE))
+            exit_run("MQ Not supported: {}".format(mq_type))
 
-        connection = pika.BlockingConnection(pika.ConnectionParameters(message_queue_url))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(mq_host, mq_port))
         channel = connection.channel()
         channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='topic')
         result = channel.queue_declare('', exclusive=True)
@@ -129,10 +135,11 @@ def run_saver_wrapper(database_url, message_queue_url):
         channel.start_consuming()
 
     except Exception as e:
-        logging.error("Error connecting to MQ: {}".format(e))
-        exit_run()
+        exit_run("Error connecting to MQ: {}".format(e))
 
 
-def exit_run():
-    print("Error encountered. Please see log for details.")
+def exit_run(message):
+    logging.error(message)
+    print("Error encountered:")
+    print(message)
     sys.exit(1)
