@@ -4,7 +4,7 @@ import os
 from ..parsers import parsers
 
 
-PROCESSED_DIRECTORY = "/tmp/Cortex/processed"
+PROCESSED_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files", "processed")
 
 #  complete snapshot data
 correct_data = {
