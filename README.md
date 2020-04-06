@@ -9,8 +9,8 @@ The system can be automatically deployed with multiple Dockers.
 - [Cortex](#cortex)
   * [Overview](#overview)
   * [Installation & Deployment](#installation---deployment)
-    + [Logging](#logging)
-    + [Testing](#testing)
+  * [Logging](#logging)
+  * [Testing](#testing)
 - [System Components](#system-components)
     + [0. Snapshots File](#0-snapshots-file)
     + [1. Client](#1-client)
@@ -27,13 +27,9 @@ The system can be automatically deployed with multiple Dockers.
     + [7. API](#7-api)
     + [8. CLI](#8-cli)
     + [9. GUI](#9-gui)
-  * [Protocol Summary](#protocol-summary)
-  * [MQ Communication Summary](#mq-communication-summary)
-- [Automatic Deployment (using Dockers)](#automatic-deployment--using-dockers-)
+- [Protocol Summary](#protocol-summary)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
-
 
 
 ## Overview
@@ -44,11 +40,12 @@ The system contains the following components: (orange = server side, green = cli
 each server side component has its own Docker.
 
 ## Installation & Deployment
-run the following commands to deploy the project:
+run the following commands to install dependencies and enter the virtual environment:
 ```bash
 ./scripts/install.sh
 source .env/bin/activate
 ```
+The installation requires Python 3.8.0.
 
 ### Logging
 All system components use 'logging' package to log their runtime errors and some of their regular runtime operations. logs will be saved in "Logs" directory which will be created inside each of the components' directories.
@@ -87,6 +84,7 @@ python -m cortex.client upload-sample -h/--host '127.0.0.1' \
 ### 2. Server
 the server is a based on Flask and Flask-Restful. 
 it is initiated with a host, a port, and a publish method (function, in API) or a message-queue URL (in CLI). messages results from the server can either be sent to a function provided by the user, or to a message queue.
+
 The server exposes a RESTful API to clients. this means that no one client is holding the entire server until it finishes. multiple client can send snapshot messages to the server at once.
 API routes for use by the Client:
 - User messages will be accepted at "api/user_message/<user_id>"
@@ -303,5 +301,5 @@ Some Dockers will be accessible from your host machine:
 * API: localhost:5000
 * GUI: http://localhost:8080
 
-After deployment you can start uploading sample files from the client to the server, and watch the results in the GUI or get them with the CLI.
+After deployment you can start uploading sample files from the client to the server (after running the installation script on your host), and watch the results in the GUI or get them with the CLI.
 The deployment script may take several minutes to finish preparing the system and build the project image.

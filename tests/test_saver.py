@@ -1,6 +1,6 @@
 import json
 import subprocess
-from ..saver import saver
+from cortex.saver import saver
 import pytest
 
 MQ_URL = "mongodb://127.0.0.1:27017/"

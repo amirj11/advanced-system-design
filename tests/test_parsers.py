@@ -1,10 +1,11 @@
 import json
 import subprocess
 import os
-from ..parsers import parsers
+from cortex.parsers import parsers
 
 
-PROCESSED_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files", "processed")
+PROCESSED_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cortex", "files",
+                                   "processed")
 
 #  complete snapshot data
 correct_data = {

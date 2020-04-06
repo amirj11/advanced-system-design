@@ -8,6 +8,7 @@
 	<body align="center">
 	<h1> Cortex User {{username}} </h1>
 		<h3> Snapshot #{{snapshot_id}} Summary </h3>
+		<h4> {{timestring}}</h4>
 		<a href="/users/{{user_id}}/snapshots"> Return to {{username}}s' snapshots list </a> <br>
 		<a href="/users/{{user_id}}"> Return to {{username}}s' main page </a> <br> <br>
 	<table align="center">
@@ -23,9 +24,15 @@
 			<th> 3D Location </th>
 			<th> Head Tilt </th>
 		</tr>
+		<tr>
 		<td> <a href="/users/{{user_id}}/snapshots/{{snapshot_id}}/translation" target="_blank"><img height=400 width=400 src="/users/{{user_id}}/snapshots/{{snapshot_id}}/translation"></a> </td>
-
-
+		<td align="center">
+		{% for key, value in rotation.items() %}
+			{{key}} = {{value}}
+			<br>
+		{% endfor %}
+		</td>
+</tr>
 	</table>
 
 		<div align="center">

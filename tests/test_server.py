@@ -1,4 +1,4 @@
-from ..server import server
+from cortex.server import server
 from .cortex_pb2 import *
 import pytest
 import json

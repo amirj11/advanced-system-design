@@ -175,14 +175,6 @@ def pose(data):
         plt.savefig(translation_path)
         plt.close(fig)
 
-        #  Rotation Parsing
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        #
-        # ax.set_xlim3d(-2, 2)
-        # ax.set_ylim3d(-2, 2)
-        # ax.set_zlim3d(-2, 2)
-
         result = {
             "user_id": snapshot_json["user_id"],
             "datetime": snapshot_json["datetime"],

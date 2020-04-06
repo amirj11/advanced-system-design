@@ -1,15 +1,14 @@
 import base64
 from datetime import datetime
-from flask import Flask, redirect, url_for, abort, make_response, render_template, send_file, Response, request
-from flask_restful import Resource, Api, reqparse, request
+from flask import Flask, render_template, send_file
+from flask_restful import Api, request
 import io
 import json
 import logging
-import numpy as np
 import os
 import plotly
 import plotly.graph_objs as go
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 from pymongo import MongoClient
 import sys
 
@@ -53,7 +52,6 @@ def index():
     collection = DB_CONNECTION["user_message"]
     data = []
     for user in collection.find({}, {"_id": 0, "user_id": 1, "username": 1}):
-        print(user)
         user = {"username": user["username"], "user_id": user["user_id"]}
         data.append(user)
     return render_template('index.html', users=data)
@@ -91,14 +89,8 @@ def user(user_id):
     search = {"user_id": int(user_id)}
     result = collection.find_one(search)
 
-    #names = ["thirst", "happiness", "exhaustion", "hunger", "translation"]
     return render_template('user.html', username=result["username"], user_id=user_id, graphJSON=graphJSON,
                            images=images, graphs_names=FEELINGS, user_details=user_details)
-
-
-@app.route("/users/<user_id>/user_pose")
-def display_pose_image(user_id):
-    pose_img = get_pose_graph(user_id)
 
 
 @app.route("/users/<user_id>/snapshots", methods=['GET', 'POST'])
@@ -152,12 +144,19 @@ def snapshot_summary(user_id, snapshot_id):
         logging.error("{}: {} ({})".format(request.remote_addr, request.url, "No snapshot for user"))
         return render_template('error.html', error="No snapshot {} for user {}".format(snapshot_id, user_id))
 
+    timestring = snapshot_["time_string"]
+    rotation = {}
     results_dict = {}
     for parser in RESULTS:
         collection = DB_CONNECTION[parser]
         search = {"user_id": user_id, "datetime": int(snapshot_["datetime"])}
         result = collection.find_one(search)
         if result:
+            if parser == "pose":
+                rotation["x"] = result["rotation_x"]
+                rotation["y"] = result["rotation_y"]
+                rotation["z"] = result["rotation_z"]
+                rotation["w"] = result["rotation_w"]
             for item in DB_REMOVE:
                 if item in result.keys():
                     del result[item]
@@ -168,7 +167,7 @@ def snapshot_summary(user_id, snapshot_id):
             results_dict[parser] = result
 
     return render_template('snapshot_summary.html', username=user["username"], snapshot_id=snapshot_id, user_id=user_id,
-                           parsers=results_dict)
+                           parsers=results_dict, rotation=rotation, timestring=timestring)
 
 
 @app.route("/users/<user_id>/snapshots/<snapshot_id>/<image_type>")
@@ -178,26 +177,30 @@ def show_image(user_id, snapshot_id, image_type):
         logging.error("{}: {} ({})".format(request.remote_addr, request.url, "no such data type"))
         return render_template('error.html', error="Unknown data type: {}".format(image_type))
 
+    parser_name = ""
+    key = ""
     if image_type == "color_image" or image_type == "depth_image":
-        collection = DB_CONNECTION[image_type]
-        search = {"user_id": user_id, "datetime": int(snapshot_id)}
-        result = collection.find_one(search)
-        if not result:
-            logging.error("{}: {} ({})".format(request.remote_addr, request.url, "no data type for snapshot"))
-            return render_template('error.html', error="No {} result for snapshot {} of user {}"
-                                   .format(image_type, snapshot_id, user_id))
-        image_path = result["{}_path".format(image_type)]
-        print(image_path)
-        img = Image.open(image_path)
-        return serve_pil_image(img)
-
+        parser_name = image_type
+        key = "{}_path".format(image_type)
     elif image_type == "translation":
-        collection = DB_CONNECTION["pose"]
-        search = {"user_id": user_id, "datetime": int(snapshot_id)}
-        result = collection.find_one(search)
-        path = result["translation_path"]
-        img = Image.open(path)
-        return serve_pil_image(img)
+        parser_name = "pose"
+        key = "translation_path"
+
+    collection = DB_CONNECTION[parser_name]
+    search = {"user_id": user_id, "datetime": int(snapshot_id)}
+    result = collection.find_one(search)
+    if not result:
+        logging.error("{}: {} ({})".format(request.remote_addr, request.url, "no data type for snapshot"))
+        return render_template('error.html', error="No {} result for snapshot {} of user {}"
+                               .format(image_type, snapshot_id, user_id))
+    image_path = result[key]
+    img = Image.open(image_path)
+
+    collection = DB_CONNECTION["snapshots"]
+    search = {"user_id": user_id, "datetime": int(snapshot_id)}
+    result = collection.find_one(search)
+
+    return serve_pil_image(img, result["time_string"])
 
 
 def run_server(host, port, database_url):
@@ -235,6 +238,9 @@ def get_user(user_id):
 
 
 def get_snapshot(user_id, snapshot_id):
+    """
+    return DB result of a specific snapshot of the user id.
+    """
     try:
         collection = DB_CONNECTION["snapshots"]
         search = {"user_id": user_id, "datetime": int(snapshot_id)}
@@ -248,6 +254,9 @@ def get_snapshot(user_id, snapshot_id):
 
 
 def get_snapshots(user_id):
+    """
+    return DB result of all snapshots of the user id.
+    """
     try:
         collection = DB_CONNECTION["snapshots"]
         search = {"user_id": user_id}
@@ -261,12 +270,23 @@ def get_snapshots(user_id):
 
 
 def get_image_url(user_id, snapshot_id, image_type):
+    """
+    get an image type and a snapshot_id, user_id and return the full URL to getting the image type,
+    including the server IP/URL.
+    """
     image_type = image_type.replace('_', '-')
     server_url = "http://{}:{}".format(HOST, PORT)
     return "{}/users/{}/snapshots/{}/{}".format(server_url, user_id, snapshot_id, image_type)
 
 
-def serve_pil_image(pil_img):
+def serve_pil_image(pil_img, times1):
+    """
+    Display image to user, with text_string = times1.
+    """
+    width, height = pil_img.size
+    draw = ImageDraw.Draw(pil_img)
+    font = ImageFont.truetype("arial.ttf", 56)
+    draw.text((width/2, 30), times1, (255, 255, 255), font=font)
     img_io = io.BytesIO()
     pil_img.save(img_io, 'JPEG', quality=70)
     img_io.seek(0)
@@ -274,17 +294,26 @@ def serve_pil_image(pil_img):
 
 
 def change_image_result(parser_name, result, user_id, snapshot_id):
+    """
+    change image result in data received from DB (from relational URL to full URL)
+    """
     del result["{}_path".format(parser_name)]
     result["image_path"] = get_image_url(user_id, snapshot_id, parser_name)
     return result
 
 
 def change_pose_result(result, user_id, snapshot_id):
+    """
+        change translation image result in data received from DB (from relational URL to full URL)
+    """
     result["translation_path"] = get_image_url(user_id, snapshot_id, "translation")
     return result
 
 
 def get_feelings_list(user_id):
+    """
+    get a list of graphs of the users' feelings, generated from the DB.
+    """
     collection = DB_CONNECTION["feelings"]
     search = {"user_id": user_id}
     feelings_list = []
@@ -318,52 +347,4 @@ def get_feelings_list(user_id):
     return feelings_list
 
 
-def get_pose_data(user_id):
-    try:
-
-        collection = DB_CONNECTION["pose"]
-        search = {"user_id": user_id}
-        result = collection.find(search).sort("datetime")
-        timestamps = []
-        data_x = []
-        data_y = []
-        data_z = []
-        for snapshot in result:
-            timestamps.append(snapshot["datetime"])
-            data_x.append(snapshot["translation_x"])
-            data_y.append(snapshot["translation_y"])
-            data_z.append(snapshot["translation_z"])
-
-        # data_x = {snapshot["datetime"]: snapshot["translation_x"] for snapshot in result}
-        # data_y = {snapshot["datetime"]: snapshot["translation_y"] for snapshot in result}
-        # data_z = {snapshot["datetime"]: snapshot["translation_z"] for snapshot in result}
-        return timestamps, data_x, data_y, data_z
-
-    except Exception as e:
-        message = "Could not connect to DB: {}".format(e)
-        logging.error(message)
-        return render_template('error.html', error="Could not connect to DB.")
-
-
-def get_pose_graph(user_id):
-    x, y, z = np.random.multivariate_normal(np.array([0, 0, 0]), np.eye(3), 200).transpose()
-    layout = go.Layout(
-        autosize=False,
-        width=500,
-        height=500,
-        margin=go.layout.Margin(
-            l=50,
-            r=50,
-            b=100,
-            t=100,
-            pad=3
-        ),
-        paper_bgcolor='#f0e2c8',
-        plot_bgcolor='#c7c7c7',
-        title="translation",
-    )
-    # fig = go.Figure(data=[trace1], layout=layout)
-    fig = dict(data=[go.Scatter3d(x=x, y=y, z=z,
-                                   mode='markers')], layout=layout)
-    return fig
 

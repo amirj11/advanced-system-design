@@ -17,7 +17,6 @@ def init_logger():
     dir_path = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__), "Logs"))
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    print(dir_path)
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                         filename='{}/client_{}.log'.format(dir_path, time_string), level=logging.DEBUG,
                         datefmt="%d.%m.%Y-%H:%M:%S")

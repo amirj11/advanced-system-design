@@ -1,5 +1,5 @@
 from click.exceptions import UsageError
-from ..client import client
+from cortex.client import client
 from .cortex_pb2 import *
 import pytest
 import subprocess
