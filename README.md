@@ -9,8 +9,8 @@ The system can be automatically deployed with multiple Dockers.
 - [Cortex](#cortex)
   * [Overview](#overview)
   * [Installation & Deployment](#installation---deployment)
-  * [Logging](#logging)
-  * [Testing](#testing)
+    + [Logging](#logging)
+    + [Testing](#testing)
 - [System Components](#system-components)
     + [0. Snapshots File](#0-snapshots-file)
     + [1. Client](#1-client)
@@ -27,7 +27,9 @@ The system can be automatically deployed with multiple Dockers.
     + [7. API](#7-api)
     + [8. CLI](#8-cli)
     + [9. GUI](#9-gui)
-- [Protocol Summary](#protocol-summary)
+  * [Protocol Summary](#protocol-summary)
+  * [MQ Communication Summary](#mq-communication-summary)
+- [Automatic Deployment (using Dockers)](#automatic-deployment--using-dockers-)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
