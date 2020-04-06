@@ -200,7 +200,7 @@ def show_image(user_id, snapshot_id, image_type):
     search = {"user_id": user_id, "datetime": int(snapshot_id)}
     result = collection.find_one(search)
 
-    return serve_pil_image(img, result["time_string"])
+    return serve_pil_image(img, result["time_string"], image_type)
 
 
 def run_server(host, port, database_url):
@@ -279,17 +279,24 @@ def get_image_url(user_id, snapshot_id, image_type):
     return "{}/users/{}/snapshots/{}/{}".format(server_url, user_id, snapshot_id, image_type)
 
 
-def serve_pil_image(pil_img, times1):
+def serve_pil_image(pil_img, times1, image_type):
     """
     Display image to user, with text_string = times1.
     """
     width, height = pil_img.size
-    draw = ImageDraw.Draw(pil_img)
-    try:
-        font = ImageFont.truetype("arial.ttf", 56)
-    except Exception:
-        font = ImageFont.truetype("LiberationSans-Regular.ttf", 56)
-    draw.text((width/2, 30), times1, (255, 255, 255), font=font)
+    if image_type == "color_image":
+        horizontal = width/2
+        vertical = 30
+        draw = ImageDraw.Draw(pil_img)
+        try:
+            font = ImageFont.truetype("arial.ttf", 56)
+        except Exception:
+            font = ImageFont.truetype("LiberationSans-Regular.ttf", 56)
+        draw.text((horizontal, vertical), times1, (255, 255, 255), font=font)
+        draw.text((horizontal - 1, vertical - 1), times1, font=font, fill="black")
+        draw.text((horizontal + 1, vertical - 1), times1, font=font, fill="black")
+        draw.text((horizontal - 1, vertical + 1), times1, font=font, fill="black")
+        draw.text((horizontal + 1, vertical + 1), times1, font=font, fill="black")
     img_io = io.BytesIO()
     pil_img.save(img_io, 'JPEG', quality=70)
     img_io.seek(0)

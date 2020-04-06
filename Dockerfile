@@ -1,5 +1,7 @@
 FROM ubuntu
 RUN apt-get update
+apt-get install -y tzdata
+RUN ln -fs /usr/share/zoneinfo/Asia/Jerusalem /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
