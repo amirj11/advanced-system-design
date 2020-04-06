@@ -285,7 +285,10 @@ def serve_pil_image(pil_img, times1):
     """
     width, height = pil_img.size
     draw = ImageDraw.Draw(pil_img)
-    font = ImageFont.truetype("arial.ttf", 56)
+    try:
+        font = ImageFont.truetype("arial.ttf", 56)
+    except Exception:
+        font = ImageFont.truetype("LiberationSans-Regular.ttf", 56)
     draw.text((width/2, 30), times1, (255, 255, 255), font=font)
     img_io = io.BytesIO()
     pil_img.save(img_io, 'JPEG', quality=70)
