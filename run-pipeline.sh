@@ -7,7 +7,7 @@ sleep 60
 docker run -d -v cortex:/cortex --network cortexnet --hostname=server --name=server -p 8000:8000 cortex python3 -m cortex.server run-server -h '0.0.0.0' -p 8000 'rabbitmq://mq:5672'
 docker run -d -v cortex:/cortex --network cortexnet --hostname=pose --name=pose cortex python3 -m cortex.parsers run-parser 'pose' 'rabbitmq://mq:5672'
 docker run -d -v cortex:/cortex --network cortexnet --hostname=color --name=color cortex python3 -m cortex.parsers run-parser 'color_image' 'rabbitmq://mq:5672'
-docker run -d -v cortex:/cortex --network cortexnet --hostname=color2 --name=color2 cortex python3 -m cortex.parsers run-parser 'color_image' 'rabbitmq://mq:5672'
+docker run -d -v cortex:/cortex --network cortexnet --hostname=depth2 --name=depth2 cortex python3 -m cortex.parsers run-parser 'depth_image' 'rabbitmq://mq:5672'
 docker run -d -v cortex:/cortex --network cortexnet --hostname=depth --name=depth cortex python3 -m cortex.parsers run-parser 'depth_image' 'rabbitmq://mq:5672'
 docker run -d -v cortex:/cortex --network cortexnet --hostname=feelings --name=feelings cortex python3 -m cortex.parsers run-parser 'feelings' 'rabbitmq://mq:5672'
 docker run -d -v cortex:/cortex --network cortexnet --hostname=saver --name=saver cortex python3 -m cortex.saver run-saver "mongodb://db:27017" 'rabbitmq://mq:5672'
