@@ -132,8 +132,8 @@ Adding new types of parsers is very easy. Follow these steps:
 1. open cortex/parsers/parsers.py
 2. write your parsing function which accepts a single argument (for data). The data will be passed to you parser in JSON string format, with values as documented in the "snapshot_to_json" function of cortex/server/server.py
 3. decorate it with "@parser". this will log your parser with all the other parsers and allow the wrapper to use it.
-4. return your desired result. the parsers service will receive it, dump it into JSON string and publish it back to the MQ, with the topic being your new parsers name.
-5. that is it! you can not deploy your parser (see API and CLI later on)
+4. return your desired result. the parsers service will receive it, dump it into JSON string and publish it back to the MQ, with the routing ky being your new parsers name.
+5. that is it! you can now deploy your parser (see API and CLI later on)
 
 
 ##### Pose Parser ('pose')
