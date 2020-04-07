@@ -230,11 +230,11 @@ It is a Flask server with Flask-Restful, using 'pymongo' to query the DB.
 
 Supported endpoints:
 - GET /users - a list of all documented users with their user ids and names.
-- GET /users/user-id - returns the user-id details: name, birthday and gender.
-- GET /users/user-id/snapshots - returns a list of documented snapshots with their timestamps only.
-- GET /users/user-id/snapshots/snapshot-id - returns the snapshot details - timestamp, supported results (documented parsers results for this snapshot).
-- GET /users/user-id/snapshots/snapshot-id/result-name - returns the specified parsers' results for this snapshot. for binary data (color and depth image) it returns the path to getting the actual binary data.
-- GET /users/user-id/snapshots/snapshot-id/color-image/data - returns the binary data of the image (supported for 'color-image' and 'depth-image')
+- GET /users/<user-id> - returns the user-id details: name, birthday and gender.
+- GET /users/<user-id>/snapshots - returns a list of documented snapshots with their timestamps only.
+- GET /users/<user-id>/snapshots/<snapshot-id> - returns the snapshot details - timestamp, supported results (documented parsers results for this snapshot). Snapshot id is its' timestamp.
+- GET /users/<user-id>/snapshots/<snapshot-id>/<result-name> - returns the specified parsers' results for this snapshot. for binary data (color and depth image) it returns the path to getting the actual binary data.
+- GET /users/<user-id>/snapshots/<snapshot-id>/color-image/data - returns the binary data of the image (supported for 'color-image' and 'depth-image')
 
 the API exposes a Python API:
 ```python
