@@ -142,7 +142,7 @@ extracts pose data from snapshot (3D user location, head tilt) into a smaller JS
 - snapshot timestamp
 - Translation: x, y, z
 - Rotation: x, y, z, w
-- path אם translation image
+- path to translation image
 
 ##### Color Image Parser ('color_image'), Depth Image Parser ('depth_image')
 extract image data (color image or depth image) from snapshot (image height, width), oreads the raw binary data from disk and converts it to a real image using PIL, and saves the processed image to disk.
