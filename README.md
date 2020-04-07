@@ -11,7 +11,6 @@ The system can be automatically deployed with multiple Dockers.
   * [Installation & Deployment](#installation---deployment)
     + [Logging](#logging)
     + [Testing](#testing)
-- [System Components](#system-components)
     + [0. Snapshots File](#0-snapshots-file)
     + [1. Client](#1-client)
     + [2. Server](#2-server)
@@ -96,8 +95,8 @@ The server de-serializes each message type (User or Snapshot) according to the P
 This is the last point in the project which uses the ProtoBuf format.
 ##### Server pusblishing to Message-Queue
 The server sends User and Snapshot JSON messages differently, using the Python 'pika' package for RabbitMQ. User messages do not need parsing and they go from the MQ directly to the saver. Snapshot messages go to the parsers first, and only then to the saver.
-- User messages: 'topic' exchange type, exchange name 'processed_data' (which the saver subscribes to and consumes from)
-- Snapshot messages: 'direct' exchange type, exchange name 'snapshot'. every parser will open its' own queue, bind itself to the 'snapshot' exchange and receive each snapshot. the server includes the user_id into every snapshot because raw snapshots do not include this information.
+- User messages: 'topic' exchange type, exchange name 'processed_data', routing key: 'user_message' (which the saver subscribes to and consumes from)
+- Snapshot messages: 'direct' exchange type, exchange name 'snapshot'. every parser will open its' own queue, binds itself to the 'snapshot' exchange and receives each snapshot. the server includes the user_id into every snapshot because raw snapshots do not include this information.
 
 This way, the server does not know about the parsers directly. the 'snapshot' direct exchange separates the server from parsers.
 
