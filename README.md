@@ -87,7 +87,7 @@ python -m cortex.client upload-sample -h/--host '127.0.0.1' \
 the server is a based on Flask and Flask-Restful. 
 it is initiated with a host, a port, and a publish method (function, in API) or a message-queue URL (in CLI). messages results from the server can either be sent to a function provided by the user, or to a message queue.
 
-The server exposes a RESTful API to clients. this means that no one client is holding the entire server until it finishes. multiple client can send snapshot messages to the server at once.
+The server exposes a RESTful API to clients. this means that no one client is holding the entire server until it finishes. multiple clients can send snapshot messages to the server at once.
 API routes for use by the Client:
 - User messages will be accepted at "api/user_message/<user_id>"
 - Snapshot messages will be accepted at "/api/snapshot_message/<user_id>"
