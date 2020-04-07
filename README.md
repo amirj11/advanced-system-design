@@ -224,7 +224,8 @@ it contains the following collections:
 
 
 ### 7. API
-The API exposes a RESTful API to query the database
+The API exposes a RESTful API to query the database.
+
 It is a Flask server with Flask-Restful, using 'pymongo' to query the DB.
 
 Supported endpoints:
