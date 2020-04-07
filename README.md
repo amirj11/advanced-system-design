@@ -2,7 +2,7 @@
 Cortex is a system which lets a client upload a file of "snapshots" of himself to a server. the snapshots are then passed to a message-queue, parsed, saved in a DB and can be queried via API, CLI or GUI.
 The system can be automatically deployed with multiple Dockers.
 
-[![Build Status](https://travis-ci.org/amirj11/advanced-system-design.svg?branch=master)](https://travis-ci.org/github/amirj11/advanced-system-design)
+[![Build Status](https://travis-ci.org/amirj11/cortex.svg?branch=master)](https://travis-ci.org/github/amirj11/cortex)
 
 ## Table of Contents
 
