@@ -190,6 +190,7 @@ As a service, the saver connects to the RabbitMQs' 'processed_data' exchange ('t
 - color_image
 - depth_image
 - feelings
+
 Binding to individual topics allows to add another component in parallel to the Saver, which can declare which data it wants to receive, instead of receiving all data as default.
 Whenever a message arrives on the queue, the callback function creates a "Saver" class instance and calls its 'save' method with the data received and the topic through which the message has arrived.
 Before saving data to the DB, the Saver verifies the data is not duplicated (i.e there isn't already such user, or that a certain parser result isn't already documented for a specific user with a specific snapshot timestamp). if not, it saves the data to the DB.
