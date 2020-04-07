@@ -137,12 +137,12 @@ Adding new types of parsers is very easy. Follow these steps:
 
 
 ##### Pose Parser ('pose')
-extracts pose data from snapshot (3D user location, head tilt) into a smaller JSON message, saves the user 3d location and head tilt as pictures. result values:
+extracts pose data from snapshot (3D user location, head tilt) into a smaller JSON message, saves the user 3d location as picture. result values:
 - user id
 - snapshot timestamp
 - Translation: x, y, z
 - Rotation: x, y, z, w
-- paths to rotation and translation images
+- path אם translation image
 
 ##### Color Image Parser ('color_image'), Depth Image Parser ('depth_image')
 extract image data (color image or depth image) from snapshot (image height, width), oreads the raw binary data from disk and converts it to a real image using PIL, and saves the processed image to disk.
