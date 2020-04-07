@@ -122,8 +122,8 @@ python -m cortex.server run-server -h/--host '127.0.0.1' \
 - Parsers can run as a one-time script (receiving a parser name and data to parse), or as a service (connecting to MQ and consuming from it indefinitely).
 - Parsers are functions. When initiated, the 'parsers' module connects to the MQ, passes messages to the correct parser function, and publishes the result which the parser returns. each parser initialization loads another instance of the 'parsers' module.
 - The module connects to the 'snapshpt' exchange name ('direct' exchange type), and uses the parser function as a callback method for when a message arrives.
-The result from the parser is then sent to the 'processed_data' exchange name ('topic' exchange type), with the parsers' name as the topic. This data is received by the Saver.
-- The parsers receive raw data in JSON the publish back JSON messages.
+The result from the parser is then sent to the 'processed_data' exchange name ('topic' exchange type), with the parsers' name as the routing key. This data is received by the Saver.
+- The parsers receive raw data in JSON and publish back JSON messages.
 - Each parser receives the entire snapshot data and extracts relevant data from it.
 - Several parsers of the same type can be initiated to perform load-balancing.
 
