@@ -26,7 +26,7 @@ UsageError.show = _show_usage_error
 @click.argument('snapshot_id', required=False)
 @click.argument('result_name', required=False)
 @click.option('-h', '--host', required=False, default="127.0.0.1")
-@click.option('-p', '--port', required=False, default="8009")
+@click.option('-p', '--port', required=False, default="5000")
 @click.option('-s', '--save', required=False, default=False)
 def run_server(action, user_id, snapshot_id, result_name, host, port, save):
     url = "http://{}:{}".format(host, port)
