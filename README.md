@@ -182,7 +182,7 @@ python -m cortex.parsers run-parser 'pose' 'rabbitmq://127.0.0.1:5672'
 ```
 
 ### 5. Saver
-the saver receives process data from the MQ and saves it to a DB. This project uses MongoDB as the back-end, using 'pymongo' package, and can run once or as a service.
+the saver receives processed data from the MQ and saves it to a DB. This project uses MongoDB as the back-end, using 'pymongo' package, and can run once or as a service.
 It is initiated with a URL for the DB, and a URL for the MQ (if run as a service).
 As a service, the saver connects to the RabbitMQs' 'processed_data' exchange ('topic' exchange type), and binds to the following topics:
 - user_message (user messages from the Server)
